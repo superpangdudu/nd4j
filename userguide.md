@@ -567,18 +567,15 @@ As with other ops, there are inplace and copy versions. There are also column co
 
 ND4J currently allows INDArrays to be backed by either float or double-precision values. The default is single-precision (float). To set the order that ND4J uses for arrays globally to double precision, you can use:
 
-For 0.4-rc3.8 and earlier:
-
 ```java
-Nd4j.dtype = DataBuffer.Type.DOUBLE;
-NDArrayFactory factory = Nd4j.factory();
-factory.setDType(DataBuffer.Type.DOUBLE);
+Nd4j.setDataType(DataBuffer.Type.DOUBLE);
 ```
 
-For 0.4-rc3.9 and later:
+Note that this should be done before using ND4J operations or creating arrays.
 
-```java
-DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
+Alternatively, you can set the property when launching the JVM:
+```
+-Ddtype=double
 ```
 
 
