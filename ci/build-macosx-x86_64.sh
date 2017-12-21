@@ -33,5 +33,5 @@ MAKEJ=1 bash buildnativeoperations.sh -c cuda -v $CUDA -cc 30
 cd $TRAVIS_BUILD_DIR/
 source change-cuda-versions.sh $CUDA
 source change-scala-versions.sh $SCALA
-mvn clean $MAVEN_PHASE -B -U --settings ./ci/settings.xml -Dmaven.test.skip=true -Dlocal.software.repository=sonatype
+mvn clean $MAVEN_PHASE -B -U --settings ./ci/settings.xml -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dlocal.software.repository=sonatype
 
