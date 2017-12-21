@@ -1,5 +1,7 @@
 package org.nd4j.linalg.activations;
 
+import org.nd4j.autodiff.samediff.SDVariable;
+import org.nd4j.autodiff.samediff.SameDiff;
 import org.nd4j.linalg.activations.impl.*;
 
 /**
@@ -64,6 +66,45 @@ public enum Activation {
      */
     public static Activation fromString(String name) {
         return Activation.valueOf(name.toUpperCase());
+    }
+
+    public SDVariable asSameDiff(SameDiff sd, SDVariable input) {
+        return asSameDiff(null, sd, input);
+    }
+
+    public SDVariable asSameDiff(String variableName, SameDiff sd, SDVariable input){
+        switch (this){
+            case CUBE:
+                return sd.pow(variableName, input, 3.0);
+            case ELU:
+                return sd.elu(variableName, input);
+            case HARDTANH:
+                return sd.hardTanh(variableName, input);
+            case IDENTITY:
+                return input;    //TODO Is this OK in all cases?
+            case LEAKYRELU:
+                return sd.leakyRelu(variableName, input, 0.0);
+            case RELU:
+                return sd.relu(variableName, input, 0.0);
+            case SIGMOID:
+                return sd.sigmoid(variableName, input);
+            case SOFTMAX:
+                return sd.softmax(variableName, input);
+            case SOFTPLUS:
+                return sd.softplus(variableName, input);
+            case SOFTSIGN:
+                return sd.softsign(variableName, input);
+            case TANH:
+                return sd.tanh(variableName, input);
+            case HARDSIGMOID:
+            case RATIONALTANH:
+            case RRELU:
+            case RECTIFIEDTANH:
+            case SELU:
+            case SWISH:
+            default:
+                throw new UnsupportedOperationException("Activation function not yet supported: " + this);
+        }
     }
 
 }
