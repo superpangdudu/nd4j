@@ -3,6 +3,11 @@ set -evx
 
 while true; do echo .; sleep 60; done &
 
+sudo fallocate -l 4GB /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
 if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
     MAVEN_PHASE="deploy"
 else
