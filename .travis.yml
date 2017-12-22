@@ -9,6 +9,14 @@ services:
 matrix:
   include:
     - os: linux
+      env: OS=android-arm SCALA=2.10
+      install: true
+      script: bash ./ci/build-android.sh
+    - os: linux
+      env: OS=android-x86 SCALA=2.11
+      install: true
+      script: bash ./ci/build-android.sh
+    - os: linux
       env: OS=linux-x86_64 CUDA=8.0 CUDNN=6 SCALA=2.10
       install: true
       script: bash ./ci/build-linux-x86_64.sh
