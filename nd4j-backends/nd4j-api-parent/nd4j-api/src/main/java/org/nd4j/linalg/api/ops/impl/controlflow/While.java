@@ -509,7 +509,7 @@ public class While extends DifferentialFunction implements CustomOp {
 
     @Override
     public CustomOpDescriptor getDescriptor() {
-        return null;
+        return CustomOpDescriptor.builder().build();
     }
 
     @Override
@@ -530,6 +530,6 @@ public class While extends DifferentialFunction implements CustomOp {
 
     @Override
     public String tensorflowName() {
-        return "while_loop";
+        return "While";
     }
 }
