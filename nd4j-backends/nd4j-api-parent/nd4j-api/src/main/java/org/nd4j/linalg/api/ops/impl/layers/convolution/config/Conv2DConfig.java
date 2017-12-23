@@ -12,5 +12,8 @@ import lombok.NoArgsConstructor;
 public class Conv2DConfig {
     private int kh, kw, sy, sx, ph, pw, dh, dw;
     private boolean isSameMode;
+    @Builder.Default
+    protected String originalInputFormat = "NCHW";
+
 
 }

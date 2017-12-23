@@ -32,10 +32,10 @@ public class TFGraphTestList {
 //            "bias_add",
 //            "add_n",
 //            "bias_add",
-            //"conv_0",
-            //"deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
-            //"deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
-            "expand_dim",
+            "conv_0",
+            "deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
+            "deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
+           // "expand_dim",
            // "g_00", //This has no placeholders in the graph - not sure how to exec as it gives a NPE
          //   "g_01",
           //  "lstm_mnist",
@@ -43,14 +43,14 @@ public class TFGraphTestList {
             //"mlp_00",
             //"mnist_00",
           //  "node_multiple_out",// -> Need to map multiple out values to graph node output values
-        //    "primitive_lstm",
+           // "primitive_lstm",
             //"transform_0",
             //"transpose",
        //     "transpose_00"
     };
     //change this to SAMEDIFF for samediff
-    //public static TFGraphTestAllHelper.ExecuteWith executeWith = ExecuteWith.SAMEDIFF;
-    public static TFGraphTestAllHelper.ExecuteWith executeWith = TFGraphTestAllHelper.ExecuteWith.LIBND4J;
+    public static TFGraphTestAllHelper.ExecuteWith executeWith = ExecuteWith.SAMEDIFF;
+    //public static TFGraphTestAllHelper.ExecuteWith executeWith = TFGraphTestAllHelper.ExecuteWith.LIBND4J;
     //public static TFGraphTestAllHelper.ExecuteWith executeWith = TFGraphTestAllHelper.ExecuteWith.JUST_PRINT;
 
     public static String modelDir = TFGraphTestAllHelper.COMMON_BASE_DIR; //this is for later if we want to check in models separately for samediff and libnd4j

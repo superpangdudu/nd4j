@@ -79,7 +79,8 @@ public class SameDiff {
     private Map<String[],DifferentialFunction> incomingArgs;
     private Map<String[],DifferentialFunction> outgoingArgs;
     private Map<String,String[]> incomingArgsReverse;
-    private Map<String,String[]> ougoingArgsReverse;
+    private Map<String,String[]> outgoingArgsReverse;
+    private Map<String,int[]> permuteOrder;
     private boolean shouldBootStrap = true;
     private Set<String> importedVarName;
     //map a function's instance id to a base name, used for propagating variable names
@@ -154,7 +155,7 @@ public class SameDiff {
         variableMap.put(withName,oldVarNameRef);
 
 
-        for(val reverseValues : ougoingArgsReverse.entrySet()) {
+        for(val reverseValues : outgoingArgsReverse.entrySet()) {
             for(int i = 0; i < reverseValues.getValue().length; i++) {
                 if(reverseValues.getValue()[i].equals(oldVarName)) {
                     reverseValues.getValue()[i] = withName;
@@ -393,7 +394,7 @@ public class SameDiff {
      * @return the outputs ids for a given function
      */
     public String[] getOutputsForFunction(DifferentialFunction function) {
-        return ougoingArgsReverse.get(function.getInstanceId());
+        return outgoingArgsReverse.get(function.getInstanceId());
     }
 
 
@@ -711,15 +712,17 @@ public class SameDiff {
         incomingArgs = new LinkedHashMap<>();
         outgoingArgs = new LinkedHashMap<>();
         incomingArgsReverse = new LinkedHashMap<>();
-        ougoingArgsReverse = new LinkedHashMap<>();
+        outgoingArgsReverse = new LinkedHashMap<>();
         this.functionInstancesById = new LinkedHashMap<>();
         placeHolderFunctions = new LinkedHashSet<>();
         functionsArgsFor = new LinkedHashMap<>();
         functionOutputFor = new LinkedHashMap<>();
         baseNameForFunctionInstanceId = new LinkedHashMap<>();
         importedVarName = new LinkedHashSet<>();
+        permuteOrder = new LinkedHashMap<>();
 
     }
+
 
     /**
      * Returns true if the variable name is imported
@@ -825,7 +828,7 @@ public class SameDiff {
         if(function.getInstanceId() == null)
             throw new ND4JIllegalStateException("Instance id can not be null. Function not initialized properly");
 
-        if(ougoingArgsReverse.containsKey(function.getInstanceId())) {
+        if(outgoingArgsReverse.containsKey(function.getInstanceId())) {
             throw new ND4JIllegalStateException("Outgoing arguments already declared for " + function);
         }
 
@@ -838,7 +841,7 @@ public class SameDiff {
                 throw new ND4JIllegalStateException("Variable name elements can not be null!");
         }
 
-        ougoingArgsReverse.put(function.getInstanceId(),varNames);
+        outgoingArgsReverse.put(function.getInstanceId(),varNames);
         outgoingArgs.put(varNames,function);
 
         for(val resultName : varNames) {
@@ -3874,6 +3877,9 @@ public class SameDiff {
      */
     public void addAsPlaceHolder(String varName) {
         placeHolderVarNames.add(varName);
+        if(getVariable(varName).getShape() != null) {
+            placeHolderOriginalShapes.put(varName,getVariable(varName).getShape());
+        }
     }
 
 
@@ -3907,6 +3913,16 @@ public class SameDiff {
             if(!placeHolderVarNames.contains(entry.getKey())) {
                 throw new ND4JIllegalStateException("Illegal variable " + entry.getKey() + " passed in. Variable found not to be a place holder variable");
             }
+
+            val specifiedShape = getOriginalShapeForPlaceHolder(entry.getKey());
+            //whole shape was specified: validate whether the input array shape is equal
+            if(!Shape.isPlaceholderShape(specifiedShape)) {
+                if(!Arrays.equals(specifiedShape,entry.getValue().shape()))  {
+                    throw new ND4JIllegalStateException("Place holder shape specified was " + Arrays.toString(specifiedShape) + " but array shape was " + Arrays.toString(entry.getValue().shape()));
+                }
+            }
+
+
 
             updateShapeForVarName(entry.getKey(),entry.getValue().shape());
             associateArrayWithVariable(entry.getValue(),getVariable(entry.getKey()));
@@ -4274,6 +4290,59 @@ public class SameDiff {
 
 
         log.info(realShapes.toString());
+    }
+
+
+    /**
+     * Permute indices for the samediff/dl4j format.
+     * Due to the dl4j format being NCHW, this is a
+     * simple routine for returning permute indices.
+     * This is typically used for model import.
+     *
+     * @param dataFormat the data format to permute
+     * @return the permuted indices
+     */
+    public static int[] permuteDataFormatForSameDiff(String dataFormat,boolean weights) {
+        val dl4jFormat = "NCHW";
+        dataFormat = dataFormat.toUpperCase();
+        //TF: filter_height, filter_width, in_channels, out_channels
+        /**
+         * N: filter_height
+         * H: filter_width
+         * W: in_channels
+         * C: out_channels
+         */
+
+
+        /**
+         *
+         *
+         */
+        //DL4J: filter_height,out_channels,filter_width,in_channels
+        // Weights should be: out channels, in channels, height,width
+        int[] ret = new int[4];
+        if(weights) {
+            ret[0] = dataFormat.indexOf('W');
+            ret[1] = dataFormat.indexOf('C');
+            ret[2] = dataFormat.indexOf('N');
+            ret[3] = dataFormat.indexOf('H');
+            return ret;
+        }
+
+
+        //NHWC
+        //DL4J: NCHW
+        for(int i = 0; i < dataFormat.length(); i++) {
+            if(dl4jFormat.indexOf(dataFormat.charAt(i)) < 0) {
+                throw new ND4JIllegalStateException("Illegal convolution data format string passed in " + dataFormat + " must be some variant of NCHW");
+            }
+        }
+
+        for(int i = 0; i < dl4jFormat.length(); i++)  {
+            ret[i] = dl4jFormat.indexOf(dataFormat.charAt(i));
+        }
+
+        return ret;
     }
 
     /**

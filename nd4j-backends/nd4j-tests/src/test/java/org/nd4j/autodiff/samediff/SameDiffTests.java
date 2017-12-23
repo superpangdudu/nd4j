@@ -13,6 +13,7 @@ import org.nd4j.linalg.api.ops.Op;
 import org.nd4j.linalg.api.ops.impl.controlflow.While;
 import org.nd4j.linalg.api.ops.impl.layers.Linear;
 import org.nd4j.linalg.api.ops.impl.transforms.SoftMaxDerivative;
+import org.nd4j.linalg.exception.ND4JIllegalStateException;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 import org.nd4j.linalg.primitives.Pair;
@@ -505,6 +506,16 @@ public class SameDiffTests {
         assertEquals(dGradAssertion,dGradTest);
 
 
+    }
+
+
+    @Test(expected = ND4JIllegalStateException.class)
+    public void testPlaceHolderWithFullShape() {
+        val sd = SameDiff.create();
+        val placeholder = sd.var("somevar",new int[] {2,2});
+        sd.addAsPlaceHolder(placeholder.getVarName());
+        assertTrue(sd.isPlaceHolder(placeholder.getVarName()));
+        sd.resolveVariablesWith(Collections.singletonMap(placeholder.getVarName(),Nd4j.linspace(1,4,4)));
     }
 
 
