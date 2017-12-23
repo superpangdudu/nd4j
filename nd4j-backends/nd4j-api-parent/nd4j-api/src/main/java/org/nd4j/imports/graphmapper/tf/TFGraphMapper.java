@@ -34,7 +34,14 @@ public class TFGraphMapper extends BaseGraphMapper<GraphDef,NodeDef,AttrValue,No
     public final static String SHAPE_KEY = "shape";
     private static TFGraphMapper MAPPER_INSTANCE = new TFGraphMapper();
     private Set<String> graphMapper = new HashSet<String>(){{
+        //While and If
+        //While -> Enter
         add("LoopCond");
+        add("Merge");
+        add("Exit");
+        add("NextIteration");
+        add("Identity");
+        add("NoOp");
     }};
     //singleton
     private TFGraphMapper() {}
@@ -327,7 +334,7 @@ public class TFGraphMapper extends BaseGraphMapper<GraphDef,NodeDef,AttrValue,No
 
                 newInstance.initFromTensorFlow(tfNode,diff,getAttrMap(tfNode),importState.getGraph());
                 importState.getSameDiff().putFunctionForId(newInstance.getInstanceId(),newInstance);
-                 //ensure we can track node name to function instance later.
+                //ensure we can track node name to function instance later.
                 diff.setBaseNameForFunctionInstanceId(tfNode.getName(),newInstance);
                 diff.addVarNameForImport(tfNode.getName());
 
@@ -582,7 +589,7 @@ public class TFGraphMapper extends BaseGraphMapper<GraphDef,NodeDef,AttrValue,No
         //shape should be mapped to a row vector
         if(shape.length < 2) {
             if(shape.length == 1)
-            shape = new int[]{1,shape[0]};
+                shape = new int[]{1,shape[0]};
             else
                 shape = new int[]{1,1};
         }

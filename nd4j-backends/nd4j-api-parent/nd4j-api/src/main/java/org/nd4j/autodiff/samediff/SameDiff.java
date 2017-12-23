@@ -3877,7 +3877,7 @@ public class SameDiff {
      */
     public void addAsPlaceHolder(String varName) {
         placeHolderVarNames.add(varName);
-        if(getVariable(varName).getShape() != null) {
+        if(getVariable(varName) != null && getVariable(varName).getShape() != null) {
             placeHolderOriginalShapes.put(varName,getVariable(varName).getShape());
         }
     }
@@ -4823,6 +4823,8 @@ public class SameDiff {
                 return OpType.INDEX_ACCUMULATION;
             case RANDOM:
                 return OpType.RANDOM;
+            case CONDITIONAL:
+                return OpType.LOGIC;
             case LOOP:
                 return OpType.LOGIC;
             case RETURN:

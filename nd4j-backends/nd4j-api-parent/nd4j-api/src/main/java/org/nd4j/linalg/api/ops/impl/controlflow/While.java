@@ -12,6 +12,7 @@ import org.nd4j.imports.graphmapper.tf.TFGraphMapper;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.CustomOp;
 import org.nd4j.linalg.api.ops.CustomOpDescriptor;
+import org.nd4j.linalg.api.ops.Op;
 import org.nd4j.weightinit.impl.ZeroInitScheme;
 import org.tensorflow.framework.AttrValue;
 import org.tensorflow.framework.GraphDef;
@@ -235,7 +236,6 @@ public class While extends DifferentialFunction implements CustomOp {
             } else {
                 log.info("starting on [{}]: {}", tfNode.getName(), tfNode.getOp());
                 val func = DifferentialFunctionClassHolder.getInstance().getInstance(TFGraphMapper.getInstance().getMappedOp(tfNode.getOp()).opName());
-                val varOutput = conditional.var(tfNode.getName(),sameDiff.getShapeForVarName(func.outputVariables()[0].getVarName()));
                 func.initFromTensorFlow(tfNode,conditional,nodeDef.getAttrMap(),graph);
             }
 
@@ -269,7 +269,6 @@ public class While extends DifferentialFunction implements CustomOp {
 
 
             val func = DifferentialFunctionClassHolder.getInstance().getInstance(TFGraphMapper.getInstance().getMappedOp(tfNode.getOp()).opName());
-            val varOutput = conditional.var(tfNode.getName(),initWith.getShapeForVarName(func.outputVariables()[0].getVarName()));
             func.initFromTensorFlow(tfNode,initWith,nodeDef.getAttrMap(),graph);
             identityCnt++;
 
@@ -327,13 +326,11 @@ public class While extends DifferentialFunction implements CustomOp {
                 if (isNewLoop) {
                     log.info("NEW LOOP ----------------------------------------");
                     val func = new While(startPosition);
-                    val varOutput = conditional.var(tfNode.getName(),initWith.getShapeForVarName(func.outputVariables()[0].getVarName()));
                     func.initFromTensorFlow(tfNode,initWith,nodeDef.getAttrMap(),graph);
 
                     log.info("END LOOP ----------------------------------------");
                 } else {
                     val func = DifferentialFunctionClassHolder.getInstance().getInstance(TFGraphMapper.getInstance().getMappedOp(tfNode.getOp()).opName());
-                    val varOutput = conditional.var(tfNode.getName(),initWith.getShapeForVarName(func.outputVariables()[0].getVarName()));
                     func.initFromTensorFlow(tfNode,initWith,nodeDef.getAttrMap(),graph);
                 }
             }
@@ -530,6 +527,17 @@ public class While extends DifferentialFunction implements CustomOp {
 
     @Override
     public String tensorflowName() {
-        return "While";
+        throw new NoOpNameFoundException("No *singular (eg: use tensorflowNames() found for this op " + opName());
+    }
+
+    @Override
+    public String[] tensorflowNames() {
+        return new String[] {"Enter","Expose"};
+    }
+
+
+    @Override
+    public Op.Type opType() {
+        return Op.Type.LOOP;
     }
 }
