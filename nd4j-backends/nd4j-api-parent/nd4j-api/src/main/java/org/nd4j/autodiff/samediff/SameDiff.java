@@ -3332,7 +3332,7 @@ public class SameDiff {
                 checkGet = var(name,shape);
             }
 
-            else if(shape != null)
+            else if(shape != null && !shapeAlreadyExistsForVarName(checkGet.getVarName()))
                 putShapeForVarName(checkGet.getVarName(),shape);
 
             if(checkGet == null) {
@@ -4437,6 +4437,7 @@ public class SameDiff {
 
         val inPaired = new ArrayList<Integer>();
 
+
         val outputVertexId = node.outputVariables();
         val outputIds = new int[outputVertexId.length];
         for(int i = 0; i < outputIds.length; i++) {
@@ -4519,8 +4520,11 @@ public class SameDiff {
         int idx = 0;
         for (val variable: variables()) {
             log.info("Exporting variable: [{}]", variable.getVarName());
-            if(variable.getArr() == null || variable.getShape() == null)
-                continue;
+            if(variable.getArr() == null || variable.getShape() == null) {
+                putArrayForVarName(variable.getVarName(),Nd4j.scalar(1.0));
+                addAsPlaceHolder(variable.getVarName());
+            }
+
 
             val pair = parseVariable(variable.getVarName());
             reverseMap.put(pair.getFirst(), ++idx);
@@ -4548,7 +4552,13 @@ public class SameDiff {
             val currVarList = new ArrayList<SDVariable>(scope.getValue().variables());
             // converting all ops from node
             for (val node: scope.getValue().variables()) {
-                val arr = node.getArr();
+                INDArray arr = node.getArr();
+                if(arr == null) {
+                    val otherArr = Nd4j.scalar(1.0);
+                    scope.getValue().putArrayForVarName(node.getVarName(),otherArr);
+                    log.warn("Adding placeholder for export for var name {}",node.getVarName());
+                    arr = otherArr;
+                }
 
                 int name = bufferBuilder.createString(node.getVarName());
                 int array = arr.toFlatArray(bufferBuilder);
