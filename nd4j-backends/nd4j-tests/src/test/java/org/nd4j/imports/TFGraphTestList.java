@@ -35,8 +35,8 @@ public class TFGraphTestList {
             //"conv_0",
             //"deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
             //"deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
-            "expand_dim",
-           // "g_00", //This has no placeholders in the graph - not sure how to exec as it gives a NPE
+            //"expand_dim",
+            //"g_00", //This has no placeholders in the graph - not sure how to exec as it gives a NPE
          //   "g_01",
           //  "lstm_mnist",
            // "math_mul_order",
@@ -46,6 +46,7 @@ public class TFGraphTestList {
         //    "primitive_lstm",
             //"transform_0",
             //"transpose",
+            "pool_1"
        //     "transpose_00"
     };
     //change this to SAMEDIFF for samediff
