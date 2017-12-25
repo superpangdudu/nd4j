@@ -18,7 +18,10 @@ import org.tensorflow.framework.AttrValue;
 import org.tensorflow.framework.GraphDef;
 import org.tensorflow.framework.NodeDef;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -54,43 +57,40 @@ public class Conv2D extends DynamicCustomOp {
                 conv2DConfig.getPw(),
                 conv2DConfig.getDh(),
                 conv2DConfig.getDw(),
-                ArrayUtil.fromBoolean(conv2DConfig.isSameMode())});
+                ArrayUtil.fromBoolean(conv2DConfig.isSameMode()),
+                ArrayUtil.fromBoolean(conv2DConfig.isNHWC())});
 
     }
 
     @Override
     public void initWithArrays(Map<String, INDArray> arrayMap, Object... extraArgs) {
         val var = sameDiff.getVariable(args()[1].getVarName());
-
         //place holder variable
         if (var.getArr() == null) {
-            INDArray weights = arrayMap.get(var.getVarName());
-
-            if(weights == null) {
+            //assuming the array hasn't been initialized, setup the config
+            //resolving the place holder variable.
+            INDArray array = arrayMap.get(var.getVarName());
+            if(array == null) {
                 throw new ND4JIllegalStateException("Array for variable " + var.getVarName() + " was null!");
             }
-
-            int[] permuteOrder = SameDiff.permuteDataFormatForSameDiff(conv2DConfig.getOriginalInputFormat(),true);
-            weights = (weights.permute(permuteOrder).dup('c'));
-            conv2DConfig.setKh(weights.size(2));
-            conv2DConfig.setKw(weights.size(3));
-            sameDiff.updateVariable(var.getVarName(), weights);
+            array = (array.permute(3, 2, 0, 1).dup('c'));
+            sameDiff.updateVariable(var.getVarName(), array);
+            conv2DConfig.setKh(array.size(0));
+            conv2DConfig.setKw(array.size(1));
         }
 
 
-        val func = args()[0];
-        INDArray arr = sameDiff.getArrForVarName(func.getVarName());
-        if(arr == null) {
-            val var2 = sameDiff.getVariable(func.getVarName());
-            arr = var2.storeAndAllocateNewArray();
-        }
-        else {
-            int[] permuteOrder = SameDiff.permuteDataFormatForSameDiff(conv2DConfig.getOriginalInputFormat(),false);
-            arr = arr.permute(permuteOrder).dup('c');
-        }
 
-        addInputArgument(arr);
+        val inputs = args();
+        for(val func : inputs) {
+            INDArray arr = sameDiff.getArrForVarName(func.getVarName());
+            if(arr == null) {
+                val var2 = sameDiff.getVariable(func.getVarName());
+                arr = var2.storeAndAllocateNewArray();
+            }
 
+            addInputArgument(arr);
+        }
 
 
     }
@@ -99,61 +99,64 @@ public class Conv2D extends DynamicCustomOp {
     public void initFromTensorFlow(NodeDef nodeDef, SameDiff initWith, Map<String, AttrValue> attributesForNode, GraphDef graph) {
         val aStrides = nodeDef.getAttrOrThrow("strides");
         val tfStrides = aStrides.getList().getIList();
-        val sY = tfStrides.get(1);
-        val sX = tfStrides.get(2);
+        int sY = 1;
+        int sX = 1;
+        int kY = 1;
+        int kX = 1;
 
         val aPadding = nodeDef.getAttrOrDefault("padding", null);
 
         val paddingMode = aPadding.getS().toStringUtf8();
-        int kY = 1;
-        int kX = 1;
+
         val args = args();
         INDArray arr = sameDiff.getVariable(args[1].getVarName()).getArr();
         if(arr == null) {
             arr = TFGraphMapper.getInstance().getNDArrayFromTensor(nodeDef.getInput(0), nodeDef, graph);
         }
 
+        String data_format = "nhwc";
+        if (nodeDef.containsAttr("data_format")) {
+            val attr = nodeDef.getAttrOrThrow("data_format");
+
+            data_format = attr.getS().toStringUtf8().toLowerCase();
+        }
 
 
-        /**
-         * From the TF docs:
-         * data_format: An optional string from: "NHWC", "NCHW". Defaults to "NHWC".
-         Specify the data format of the input and output data.
-         With the default format "NHWC", the data is stored in the order of: [batch, height, width, channels].
-         Alternatively, the format could be "NCHW", the data storage order of: [batch, channels, height, width].
-         */
-        /**
-         * N: Number of examples
-         * C: Number of channels
-         * H: Height
-         * W: Width
-         *
-         * Dl4j uses: NCHW
-         * Weights should be: out channels, in channels, height,width
-         */
+        if (data_format.equalsIgnoreCase("nhwc")) {
+            sY = tfStrides.get(1).intValue();
+            sX = tfStrides.get(2).intValue();
 
-        val dataFormat = !attributesForNode.containsKey("data_format") ? "NHWC" : attributesForNode.get("data_format").getS().toStringUtf8();
-        int[] ret = SameDiff.permuteDataFormatForSameDiff(dataFormat,true);
+            kY = arr.size(0);
+            kX = arr.size(1);
+        } else {
+            sY = tfStrides.get(2).intValue();
+            sX = tfStrides.get(3).intValue();
 
-        arr = (arr.permute(ret).dup('c'));
+            kY = arr.size(2);
+            kX = arr.size(3);
+        }
+
+        // TODO: arguable. it might be easier to permute weights once
+        //arr = (arr.permute(3, 2, 0, 1).dup('c'));
         val  varForOp = initWith.getVariable(args[1].getVarName());
         initWith.associateArrayWithVariable(arr, varForOp);
-
-        kY = arr.size(2);
-        kX = arr.size(3);
 
 
         boolean isSameMode = paddingMode.equalsIgnoreCase("SAME");
         Conv2DConfig conv2DConfig = Conv2DConfig.builder()
                 .kh(kY)
                 .kw(kX)
-                .originalInputFormat(dataFormat)
-                .sx(sX.intValue())
-                .sy(sY.intValue())
+                .sx(sX)
+                .sy(sY)
                 .isSameMode(isSameMode)
+                .isNHWC(data_format.equalsIgnoreCase("nhwc"))
                 .build();
         this.conv2DConfig = conv2DConfig;
+
         addArgs();
+
+        addOutputArgument(arr);
+
 
     }
 

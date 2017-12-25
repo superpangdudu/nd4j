@@ -10,10 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Conv2DConfig {
-    private int kh, kw, sy, sx, ph, pw, dh, dw;
+    private int kh, kw, sy, sx, ph, pw;
+    @Builder.Default private int dh = 1;
+    @Builder.Default private int dw = 1;
     private boolean isSameMode;
-    @Builder.Default
-    protected String originalInputFormat = "NCHW";
-
-
+    @Builder.Default private boolean isNHWC = false;
 }
