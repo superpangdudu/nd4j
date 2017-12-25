@@ -1501,7 +1501,7 @@ public class NativeOpExecutioner extends DefaultOpExecutioner {
      */
     public void exec(@NonNull CustomOp op) {
         if (op.numOutputArguments() == 0 && !op.isInplaceCall())
-            throw new ND4JIllegalStateException("You can't execute non-inplace CustomOp without outputs being specified");
+            throw new ND4JIllegalStateException("Op name " + op.opName() +  " failed to execute. You can't execute non-inplace CustomOp without outputs being specified");
 
         val hash = op.opHash();
 

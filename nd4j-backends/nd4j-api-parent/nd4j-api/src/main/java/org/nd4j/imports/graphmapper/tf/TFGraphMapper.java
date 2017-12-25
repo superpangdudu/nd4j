@@ -36,12 +36,22 @@ public class TFGraphMapper extends BaseGraphMapper<GraphDef,NodeDef,AttrValue,No
     private Set<String> graphMapper = new HashSet<String>(){{
         //While and If
         //While -> Enter
+        /**
+         * Need to work on coping with variables
+         * that are marked as "shouldSkip"
+         *
+         * Possibly consider replacing should skip
+         * with a special handler interface. Something like
+         *
+         * public interface ImportOpHandler
+         */
         add("LoopCond");
         add("Merge");
         add("Exit");
         add("NextIteration");
         add("Identity");
         add("NoOp");
+        add("Switch");
     }};
     //singleton
     private TFGraphMapper() {}

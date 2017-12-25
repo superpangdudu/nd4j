@@ -286,10 +286,13 @@ public class If extends DifferentialFunction implements CustomOp {
         val uniqueId = java.util.UUID.randomUUID().toString();
 
         val scopeCondition = SameDiff.create();
-        val scopeLoop = SameDiff.create();
+        val trueBody = SameDiff.create();
+        val falseBody = SameDiff.create();
+
         initWith.putSubFunction("condition-" + uniqueId,scopeCondition);
-        initWith.putSubFunction("loopbody-" + uniqueId,scopeLoop);
-        this.loopBodyExecution = scopeLoop;
+        initWith.putSubFunction("truebody-" + uniqueId,trueBody);
+        initWith.putSubFunction("falsebody-" + uniqueId,falseBody);
+        this.loopBodyExecution = trueBody;
         this.predicateExecution = scopeCondition;
 
         log.info("Adding 2 new scopes for WHILE {}");
@@ -324,7 +327,7 @@ public class If extends DifferentialFunction implements CustomOp {
                 val input = TFGraphMapper.getInstance().getNodeName(tfNode.getInput(e));
                 vars[e] = initWith.getVariable(input) == null ? initWith.var(input,null,new ZeroInitScheme('f')) : initWith.getVariable(input);
                 scopeCondition.var(vars[e]);
-                scopeLoop.var(vars[e]);
+                trueBody.var(vars[e]);
             }
 
             this.inputVars = vars;
@@ -337,12 +340,12 @@ public class If extends DifferentialFunction implements CustomOp {
             val tfNode = nodes.get(currIndex.get());
 
             if (!tfNode.getOp().equalsIgnoreCase("merge")) {
-                scopeLoop.var(TFGraphMapper.getInstance().getNodeName(tfNode.getName()),null,new ZeroInitScheme('f'));
+                trueBody.var(TFGraphMapper.getInstance().getNodeName(tfNode.getName()),null,new ZeroInitScheme('f'));
                 break;
             }
 
             skipSet.add(tfNode.getName());
-            val var = scopeLoop.var(TFGraphMapper.getInstance().getNodeName(tfNode.getName()),null,new ZeroInitScheme('f'));
+            val var = trueBody.var(TFGraphMapper.getInstance().getNodeName(tfNode.getName()),null,new ZeroInitScheme('f'));
             scopeCondition.var(var);
             initWith.var(var);
             mergedCnt++;
@@ -367,7 +370,7 @@ public class If extends DifferentialFunction implements CustomOp {
 
             if (isConst || isVar || isPlaceholder) {
                 val var = scopeCondition.var(tfNode.getName(),null,new ZeroInitScheme('f'));
-                scopeLoop.var(var);
+                trueBody.var(var);
                 initWith.var(var);
                 log.info("Adding condition var [{}]", var.getVarName());
 
@@ -404,15 +407,15 @@ public class If extends DifferentialFunction implements CustomOp {
 
             val func = DifferentialFunctionClassHolder.getInstance().getInstance(TFGraphMapper.getInstance().getMappedOp(tfNode.getOp()).opName());
             func.initFromTensorFlow(tfNode,initWith,nodeDef.getAttrMap(),graph);
-            func.setSameDiff(scopeLoop);
+            func.setSameDiff(trueBody);
             val variables = new SDVariable[tfNode.getInputCount()];
             for(int i = 0; i < tfNode.getInputCount(); i++) {
                 variables[i] = initWith.getVariable(TFGraphMapper.getInstance().getNodeName(tfNode.getInput(i)));
                 scopeCondition.var(variables[i]);
-                scopeLoop.var(variables[i]);
+                trueBody.var(variables[i]);
             }
 
-            scopeLoop.addArgsFor(variables,func);
+            trueBody.addArgsFor(variables,func);
             skipSet.add(tfNode.getName());
         }
 
@@ -444,7 +447,7 @@ public class If extends DifferentialFunction implements CustomOp {
 
 
             if (isConst || isVar || isPlaceholder) {
-                val var = scopeLoop.var(tfNode.getName(), null,new ZeroInitScheme('f'));
+                val var = trueBody.var(tfNode.getName(), null,new ZeroInitScheme('f'));
                 log.info("Adding body var [{}]",var.getVarName());
 
             } else {
@@ -469,16 +472,16 @@ public class If extends DifferentialFunction implements CustomOp {
                         val name = TFGraphMapper.getInstance().getNodeName(tfNode.getInput(i));
                         variables[i] = scopeCondition.getVariable(name);
                         if(variables[i] == null) {
-                            if(scopeLoop.getVariable(name) == null)
+                            if(trueBody.getVariable(name) == null)
                                 variables[i] = scopeCondition.var(initWith.getVariable(name));
-                            else if(scopeLoop.getVariable(name) != null)
-                                variables[i] = scopeLoop.getVariable(name);
+                            else if(trueBody.getVariable(name) != null)
+                                variables[i] = trueBody.getVariable(name);
                             else
-                                variables[i] = scopeLoop.var(name, Nd4j.scalar(1.0));
+                                variables[i] = trueBody.var(name, Nd4j.scalar(1.0));
                         }
                     }
 
-                    scopeLoop.addArgsFor(variables,func);
+                    trueBody.addArgsFor(variables,func);
 
 
                 }

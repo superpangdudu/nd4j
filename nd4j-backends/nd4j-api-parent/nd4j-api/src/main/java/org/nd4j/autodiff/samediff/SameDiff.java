@@ -3249,7 +3249,7 @@ public class SameDiff {
                 val descriptor = customOp.getDescriptor();
                 //can't guess number of outputs, variable
                 if(descriptor == null || descriptor.getNumOutputs() <= 0) {
-                    return new SDVariable[0];
+                   throw new ND4JIllegalStateException("No output variables found!");
                 }
                 else {
                     SDVariable[] ret = new SDVariable[descriptor.getNumOutputs()];

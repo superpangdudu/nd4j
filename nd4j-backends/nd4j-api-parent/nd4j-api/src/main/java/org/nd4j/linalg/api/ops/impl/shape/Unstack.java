@@ -41,18 +41,15 @@ public class Unstack extends DynamicCustomOp {
     @Override
     public void initFromTensorFlow(NodeDef nodeDef, SameDiff initWith, Map<String, AttrValue> attributesForNode, GraphDef graph) {
         val attrAxis = nodeDef.getAttrOrThrow("axis");
-        int num = -1;
-        if(attributesForNode.containsKey("num")) {
-            num = (int) nodeDef.getAttrOrThrow("num").getI();
-        }
-
-
         int axis = (int) attrAxis.getI();
         this.axis = axis;
         addIArgument(axis);
 
-
     }
+
+
+
+
 
     @Override
     public void initFromOnnx(OnnxProto3.NodeProto node, SameDiff initWith, Map<String, OnnxProto3.AttributeProto> attributesForNode, OnnxProto3.GraphProto graph) {
