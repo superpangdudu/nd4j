@@ -32,9 +32,11 @@ public class TFGraphTestList {
 //            "bias_add",
 //            "add_n",
 //            "bias_add",
-            "conv_0",
-            "deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
-            "deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
+            //"conv_0",
+            //"deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
+            //"deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
+            "simple_cond"
+
            // "expand_dim",
            // "g_00", //This has no placeholders in the graph - not sure how to exec as it gives a NPE
          //   "g_01",

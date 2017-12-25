@@ -198,8 +198,8 @@ public class While extends DifferentialFunction implements CustomOp {
          * 5) PROFIT!
          */
 
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             if (!tfNode.getOp().equalsIgnoreCase("enter")) {
                 //skipSet.add(tfNode.getName());
@@ -225,8 +225,8 @@ public class While extends DifferentialFunction implements CustomOp {
 
         // now we're skipping Merge step, since we've already captured variables at Enter step
         int mergedCnt = 0;
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             if (!tfNode.getOp().equalsIgnoreCase("merge")) {
                 scopeLoop.var(TFGraphMapper.getInstance().getNodeName(tfNode.getName()),null,new ZeroInitScheme('f'));
@@ -242,13 +242,13 @@ public class While extends DifferentialFunction implements CustomOp {
 
 
         // now, we're adding conditional scope
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             // we're parsing up to condition
             if (tfNode.getOp().equalsIgnoreCase("LoopCond")) {
                 skipSet.add(tfNode.getName());
-                startPosition.incrementAndGet();
+                currIndex.incrementAndGet();
                 break;
             }
 
@@ -272,8 +272,8 @@ public class While extends DifferentialFunction implements CustomOp {
 
         // time to skip some Switch calls
         int switchCnt = 0;
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             // we're parsing up to condition
             if (!tfNode.getOp().equalsIgnoreCase("Switch"))
@@ -285,8 +285,8 @@ public class While extends DifferentialFunction implements CustomOp {
 
         // now we're parsing Identity step
         int identityCnt = 0;
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
 
             if (!tfNode.getOp().equalsIgnoreCase("Identity")) {
@@ -310,8 +310,8 @@ public class While extends DifferentialFunction implements CustomOp {
 
 
         // parsing body scope
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             if (skipSet.contains(tfNode.getName())) {
                 log.info("Skipping: {}", tfNode.getName());
@@ -344,7 +344,7 @@ public class While extends DifferentialFunction implements CustomOp {
 
                 if (tfNode.getOp().equalsIgnoreCase("enter")) {
                     log.info("NEW LOOP ----------------------------------------");
-                    val func = new While(startPosition);
+                    val func = new While(currIndex);
                     func.doImport(nodeDef,initWith,attributesForNode,graph,skipSet,currIndex);
                     func.setSameDiff(initWith);
                     log.info("END LOOP ----------------------------------------");
@@ -384,8 +384,8 @@ public class While extends DifferentialFunction implements CustomOp {
         val returnOutputs = new ArrayList<SDVariable>();
 
         // mapping NextIterations, to Return op
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             if (!tfNode.getOp().equalsIgnoreCase("NextIteration"))
                 break;
@@ -405,8 +405,8 @@ public class While extends DifferentialFunction implements CustomOp {
 
         // we should also map While/Exit to libnd4j while
         int exitCnt = 0;
-        for (; startPosition.get() < nodes.size(); startPosition.incrementAndGet()) {
-            val tfNode = nodes.get(startPosition.get());
+        for (; currIndex.get() < nodes.size(); currIndex.incrementAndGet()) {
+            val tfNode = nodes.get(currIndex.get());
 
             if (!tfNode.getOp().equalsIgnoreCase("Exit")) {
                 //skipSet.add(tfNode.getName());
