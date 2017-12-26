@@ -35,7 +35,7 @@ public class TFGraphTestList {
             //"conv_0",
             //"deep_mnist", //NOTE THIS ONE WILL FAIL because it is expecting a placeholder value for dropout % which we tie to 1.0 in inference
             //"deep_mnist_no_dropout", //Takes way too long since there are a lot of nodes, would skip for now
-            "simple_cond"
+           // "simple_cond"
 
            // "expand_dim",
            // "g_00", //This has no placeholders in the graph - not sure how to exec as it gives a NPE
@@ -45,7 +45,7 @@ public class TFGraphTestList {
             //"mlp_00",
             //"mnist_00",
           //  "node_multiple_out",// -> Need to map multiple out values to graph node output values
-        //    "primitive_lstm",
+            "primitive_lstm",
             //"transform_0",
             //"transpose",
        //     "transpose_00"
